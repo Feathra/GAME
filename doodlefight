@@ -1,0 +1,326 @@
+import pygame
+import random
+
+# Einstellungen-Klasse für Konstanten
+class Settings:
+    WIDTH = 800
+    HEIGHT = 650
+    WHITE = (255, 255, 255)
+    GREEN = (50, 220, 100)
+    RED = (220, 50, 100)
+    DARK_GRAY = (60, 60, 60)
+    PLATFORM_WIDTH = 100
+    PLATFORM_HEIGHT = 20
+    MAX_JUMP_HEIGHT = 180
+    FONT_SIZE = 50
+
+settings = Settings()
+
+# Doodler-Klasse (jetzt ein Pygame Sprite)
+class Doodler(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((40, 40))
+        self.image.fill(settings.RED)
+        self.rect = self.image.get_rect(center=(settings.WIDTH // 2, settings.HEIGHT - 70))
+        self.dy = 0
+        self.dx = 0
+        self.score = 0
+        self.hp = 100
+
+    def update(self):
+        """Bewegt den Doodler und berücksichtigt die Bildschirmränder."""
+        self.dy += 1  # Schwerkraft
+        self.rect.y += self.dy
+        self.rect.x += self.dx
+
+        # Endlos-Bildschirm horizontal
+        if self.rect.left > settings.WIDTH:
+            self.rect.right = 0
+        elif self.rect.right < 0:
+            self.rect.left = settings.WIDTH
+
+    def jump(self):
+        """Lässt den Doodler springen."""
+        self.dy = -20
+
+    def lands_on(self, platform):
+        """Prüft, ob der Doodler auf einer Plattform landet."""
+        return (self.dy > 0 and
+                self.rect.bottom >= platform.rect.top and
+                self.rect.left < platform.rect.right and
+                self.rect.right > platform.rect.left and
+                self.rect.bottom <= platform.rect.bottom)
+
+# Plattform-Klasse (jetzt ein Pygame Sprite)
+class Platform(pygame.sprite.Sprite):
+    def __init__(self, x, y, w=settings.PLATFORM_WIDTH, h=settings.PLATFORM_HEIGHT):
+        super().__init__()
+        self.image = pygame.Surface((w, h))
+        self.image.fill(settings.GREEN)
+        self.rect = self.image.get_rect(center=(x, y))
+        self.dx = random.choice([-2, 2])  # Horizontale Bewegungsrichtung
+
+    def update(self, score):
+        """Bewegt die Plattform horizontal, wenn der Score einen bestimmten Wert erreicht."""
+        if score >= 50:
+            self.rect.x += self.dx
+            if self.rect.left < 0 or self.rect.right > settings.WIDTH:
+                self.dx *= -1  # Richtung umkehren
+
+# Zerbrechliche Plattform-Klasse (erbt von Platform)
+class BreakablePlatform(Platform):
+    def __init__(self, x, y):
+        super().__init__(x, y, w=settings.PLATFORM_WIDTH // 2, h=settings.PLATFORM_HEIGHT // 2)
+        self.image.fill((150, 150, 150))  # Graue Farbe
+        self.broken = False
+
+    def update(self, score):
+        if not self.broken:
+            super().update(score)
+
+    def landed_on(self, doodler, platforms_group, all_sprites_group):
+        """Markiert die Plattform als zerbrochen und entfernt sie nach kurzer Zeit."""
+        if not self.broken:
+            self.broken = True
+            self.image.fill(settings.DARK_GRAY)
+            pygame.time.set_timer(pygame.USEREVENT, 500, once=True) # Event zum Entfernen nach 0.5 Sek.
+            self.kill() # Entfernt aus der Plattform-Gruppe, bleibt aber in all_sprites für das Zeichnen bis zum Event
+
+# Gegner-Klasse (jetzt ein Pygame Sprite)
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((40, 40))
+        self.image.fill(settings.RED)
+        self.rect = self.image.get_rect(center=(x, y))
+        self.dx = random.choice([-1, 1])
+        self.projectiles = pygame.sprite.Group() # Gruppe für die Projektile des Gegners
+
+    def update(self):
+        """Bewegt den Gegner horizontal."""
+        self.rect.x += self.dx
+        if self.rect.left < 0 or self.rect.right > settings.WIDTH:
+            self.dx *= -1
+
+    def shoot(self, all_sprites_group):
+        """Erstellt ein neues Projektil und fügt es zur Gruppe hinzu."""
+        projectile = Projectile(self.rect.centerx, self.rect.bottom)
+        self.projectiles.add(projectile)
+        all_sprites_group.add(projectile)
+
+    def update_projectiles(self):
+        """Aktualisiert die Positionen der Projektile und entfernt überflüssige."""
+        self.projectiles.update()
+        for projectile in self.projectiles.copy():
+            if projectile.rect.top > settings.HEIGHT:
+                self.projectiles.remove(projectile)
+                projectile.kill() # Entfernt das Sprite
+
+# Projektil-Klasse (für Gegner) (jetzt ein Pygame Sprite)
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((10, 10))
+        self.image.fill(settings.WHITE)
+        self.rect = self.image.get_rect(center=(x, y))
+        self.dy = 5
+
+    def update(self):
+        """Bewegt das Projektil nach unten."""
+        self.rect.y += self.dy
+
+# Spieler-Projektil-Klasse (jetzt ein Pygame Sprite)
+class PlayerProjectile(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((10, 10))
+        self.image.fill(settings.WHITE)
+        self.rect = self.image.get_rect(center=(x, y))
+        self.dy = -10
+
+    def update(self):
+        """Bewegt das Projektil nach oben."""
+        self.rect.y += self.dy
+
+# Erstellt die initialen Plattformen
+def create_platforms():
+    platforms = pygame.sprite.Group()
+    y = settings.HEIGHT - 30
+    difficulty_factor = 0
+
+    while y > -settings.HEIGHT:
+        num_platforms = random.randint(2, 4)
+        for _ in range(num_platforms):
+            x = random.randint(50, settings.WIDTH - 50)
+            platform_width = max(50, settings.PLATFORM_WIDTH - difficulty_factor * 5)
+            platform_height = settings.PLATFORM_HEIGHT
+            if random.random() < 0.1 + difficulty_factor * 0.05: # Wahrscheinlichkeit für zerbrechliche Plattform erhöhen
+                platforms.add(BreakablePlatform(x, y))
+            else:
+                platforms.add(Platform(x, y, w=platform_width, h=platform_height))
+        y -= random.randint(100, settings.MAX_JUMP_HEIGHT + int(difficulty_factor * 10))
+        difficulty_factor += 0.05
+
+    return platforms
+
+# Startet ein neues Spiel
+def restart_game():
+    all_sprites = pygame.sprite.Group()
+    platforms = create_platforms()
+    for platform in platforms:
+        all_sprites.add(platform)
+    doodler = Doodler()
+    all_sprites.add(doodler)
+    enemies = pygame.sprite.Group()
+    player_projectiles = pygame.sprite.Group()
+
+    # Spieler auf der ersten Plattform platzieren
+    if platforms:
+        starting_platform = platforms.sprites()[0]
+        doodler.rect.midbottom = starting_platform.rect.midtop
+
+    return all_sprites, platforms, doodler, enemies, player_projectiles
+
+# Hauptspiel-Schleife
+def game_loop():
+    screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT))
+    pygame.display.set_caption("Doodle Jump Clone")
+    clock = pygame.time.Clock()
+
+    # Initialize the font module
+    pygame.font.init()
+    global font
+    font = pygame.font.SysFont("Arial", settings.FONT_SIZE)
+
+    all_sprites, platforms, doodler, enemies, player_projectiles = restart_game()
+    running = True
+
+    while running:
+        screen.fill(settings.DARK_GRAY)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    doodler.dx = -3
+                elif event.key == pygame.K_RIGHT:
+                    doodler.dx = 3
+                elif event.key == pygame.K_r:
+                    all_sprites, platforms, doodler, enemies, player_projectiles = restart_game()
+                elif event.key == pygame.K_SPACE:
+                    projectile = PlayerProjectile(doodler.rect.midtop[0], doodler.rect.top)
+                    player_projectiles.add(projectile)
+                    all_sprites.add(projectile)
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                    doodler.dx = 0
+            elif event.type == pygame.USEREVENT:
+                # Event zum Entfernen zerbrochener Plattformen
+                for platform in platforms.copy():
+                    if isinstance(platform, BreakablePlatform) and platform.broken:
+                        platforms.remove(platform)
+                        all_sprites.remove(platform)
+
+        # Doodler-Bewegung und Kollision mit Plattformen
+        doodler.update()
+        for platform in platforms:
+            if doodler.lands_on(platform):
+                doodler.jump()
+                if isinstance(platform, BreakablePlatform):
+                    platform.landed_on(doodler, platforms, all_sprites)
+                break
+
+        # Plattform-Bewegung
+        platforms.update(doodler.score)
+
+        # Feinde hinzufügen
+        if doodler.score >= 20 and len(enemies) < 5:
+            enemy_x = random.randint(50, settings.WIDTH - 50)
+            enemy_y = random.choice([p.rect.y for p in platforms]) if platforms else settings.HEIGHT // 2
+            enemy = Enemy(enemy_x, enemy_y)
+            enemies.add(enemy)
+            all_sprites.add(enemy)
+
+        # Feinde bewegen und schießen lassen
+        for enemy in enemies:
+            enemy.update()
+            enemy.update_projectiles()
+            if random.randint(1, 500) > 495: # Erhöhte Schussrate
+                enemy.shoot(all_sprites)
+
+            # Kollision Spieler springt auf Feind
+            if (doodler.dy > 0 and
+                    pygame.sprite.collide_rect(doodler, enemy)):
+                enemies.remove(enemy)
+                all_sprites.remove(enemy)
+                doodler.jump()
+                doodler.score += 5 # Bonus-Punkte für das Besiegen von Feinden
+
+            # Kollision mit feindlichen Projektilen
+            projectiles_hit = pygame.sprite.spritecollide(doodler, enemy.projectiles, True)
+            for projectile in projectiles_hit:
+                doodler.hp -= 10
+                if doodler.hp <= 0:
+                    running = False
+
+        # Spieler-Projektile bewegen und Kollision mit Feinden
+        player_projectiles.update()
+        enemies_hit_by_player = pygame.sprite.groupcollide(player_projectiles, enemies, True, True)
+        for projectile, enemy_list in enemies_hit_by_player.items():
+            doodler.score += 10 # Mehr Punkte für das Abschießen von Feinden
+            projectile.kill() # Entfernt das Projektil
+            for enemy in enemy_list:
+                enemy.kill() # Entfernt den getroffenen Feind
+
+        # Bildschirm scrollen
+        if doodler.rect.top < settings.HEIGHT // 2 and doodler.dy < 0:
+            dy = -doodler.dy
+            doodler.rect.y += dy
+            for sprite in all_sprites:
+                if sprite != doodler:
+                    sprite.rect.y += dy
+                    if sprite.rect.top > settings.HEIGHT:
+                        if sprite in platforms:
+                            platforms.remove(sprite)
+                            all_sprites.remove(sprite)
+                            highest_y = min(p.rect.top for p in platforms) if platforms else settings.HEIGHT
+                            new_y = highest_y - random.randint(100, settings.MAX_JUMP_HEIGHT)
+                            new_x = random.randint(50, settings.WIDTH - 50)
+                            new_platform = Platform(new_x, new_y)
+                            platforms.add(new_platform)
+                            all_sprites.add(new_platform)
+                            doodler.score += 1
+                        elif sprite in enemies:
+                            enemies.remove(sprite)
+                            all_sprites.remove(sprite)
+
+        # Zeichnen aller Sprites
+        all_sprites.draw(screen)
+
+        # Anzeigen von Score und HP
+        score_text = font.render(str(doodler.score), True, settings.WHITE)
+        screen.blit(score_text, (10, 10))
+        hp_text = font.render(f"HP: {doodler.hp}", True, settings.WHITE)
+        screen.blit(hp_text, (settings.WIDTH - 150, 10))
+
+        # Game Over
+        if doodler.hp <= 0 or doodler.rect.top > settings.HEIGHT:
+            game_over_text = font.render("GAME OVER", True, settings.WHITE)
+            restart_text = font.render("Press R to Restart", True, settings.WHITE)
+            screen.blit(game_over_text, (settings.WIDTH // 2 - game_over_text.get_width() // 2, settings.HEIGHT // 2 - 30))
+            screen.blit(restart_text, (settings.WIDTH // 2 - restart_text.get_width() // 2, settings.HEIGHT // 2 + 30))
+            pygame.display.flip()
+            pygame.time.wait(2000)
+            running = False
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    pygame.quit()
+
+# Spiel starten
+if __name__ == "__main__":
+    pygame.init()
+    game_loop()

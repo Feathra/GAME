@@ -6,6 +6,9 @@ import random
 # SpaceObject Class (Physics)
 # ------------------------
 
+# This class represents the ships and their physics in the game.
+# It handles the position, velocity, rotation, and collision with walls.
+# The ships can move, rotate, and apply thrust. The class also manages the health points (HP) of the ships.
 class SpaceObject:
     
     def __init__(self, x, y, angle=0, velocity_x=0, velocity_y=0, hp=100, WORLD_WIDTH=2000, WORLD_HEIGHT=2000):
@@ -17,7 +20,9 @@ class SpaceObject:
         self.vx = velocity_x  # Initial velocity
         self.vy = velocity_y
         self.hp = hp  # Health points
-        
+    
+    # Update the position of the ship based on its velocity and angle.
+    # The ship's velocity is affected by friction, and it is clamped to a maximum speed.    
     def update_position(self, is_enemy=False):
         max_speed = 10 if not is_enemy else 5  # Player: 10, Enemy: 5
         friction = 0.98  # Friction effect
@@ -30,16 +35,21 @@ class SpaceObject:
         self.x = max(0, min(self.x, self.WORLD_WIDTH))
         self.y = max(0, min(self.y, self.WORLD_HEIGHT))
 
-
+    # Apply thrust in the direction of the ship's angle.
+    # The thrust amount is added to the ship's velocity in the x and y directions.
     def thrust(self, amount):
         rad = math.radians(self.angle)
         self.vx += math.cos(rad) * amount
         self.vy += math.sin(rad) * amount
 
+    ## Rotate the ship by a specified number of degrees.
+    # The angle is clamped to the range [0, 360) degrees.
     def rotate(self, degrees):
         self.angle = (self.angle + degrees) % 360
 
-
+    # Get the current state of the ship, including position, velocity, and angle.
+    # This is useful for saving or sending the state of the ship.
+    # The state is returned as a dictionary.
     def get_state(self):
         return {
             "x": self.x,
@@ -48,6 +58,10 @@ class SpaceObject:
             "vy": self.vy,
             "angle": self.angle,
         }
+        
+    # Check for collision with walls.
+    # If a collision is detected, the ship's position and velocity are adjusted accordingly.
+    # The ship is moved back to the edge of the wall, and its velocity is set to zero.
 
     def check_wall_collision(self, walls):
         ship_rect = pygame.Rect(self.x - 10, self.y - 10, 20, 20)  # Size of the ship
@@ -70,7 +84,10 @@ class SpaceObject:
 
 # ------------------------
 # Bullet Class
-# ------------------------        
+# ------------------------   
+
+# This class represents the bullets fired by the ships.
+# Each bullet has a position, angle, owner (ship index), and speed.     
 class Bullet:
     def __init__(self, x, y, angle, owner, speed=15):  # Bullets are faster
         self.x = x
@@ -80,11 +97,16 @@ class Bullet:
         rad = math.radians(angle)
         self.vx = math.cos(rad) * speed
         self.vy = math.sin(rad) * speed
-
+        
+    # Update the position of the bullet based on its velocity.
+    # The bullet moves in the direction of its angle.
+    # The position is updated by adding the velocity to the current position.
     def update(self):
         self.x += self.vx
         self.y += self.vy
 
+    # Check if the bullet is offscreen.
+    # The bullet is considered offscreen if it is outside the world boundaries.
     def is_offscreen(self, world_width, world_height):
         return not (0 <= self.x <= world_width and 0 <= self.y <= world_height)
 
@@ -93,6 +115,8 @@ class Bullet:
 # GameEngine Class
 # ------------------------
 
+# This class manages the game state, including the ships, bullets, score, and time.
+# It handles the game logic, including updating the positions of the ships and bullets,
 class GameEngine:
     def __init__(self, walls):
         self.ships = [
@@ -103,6 +127,8 @@ class GameEngine:
         self.score = [0, 0]
         self.time = 0
 
+    # Update the game state.
+    # This includes updating the positions of the ships and bullets, checking for collisions,
     def update(self, walls):
         new_ships = []
         for i, ship in enumerate(self.ships[:]):
@@ -117,6 +143,7 @@ class GameEngine:
                         new_ships.append(SpaceObject(x, y, angle=random.randint(0, 360), hp=100))
         self.ships.extend(new_ships)
 
+        
         for bullet in self.bullets:
             bullet.update()
         new_bullets = []
@@ -133,7 +160,10 @@ class GameEngine:
                 new_bullets.append(bullet)
 
         self.bullets = [b for b in new_bullets if not b.is_offscreen(self.ships[0].WORLD_WIDTH, self.ships[0].WORLD_HEIGHT)]
-            
+    
+    # Shoot a bullet from the specified ship.
+    # The bullet is spawned slightly in front of the ship, and its speed is set.
+    # The bullet is added to the list of bullets in the game.       
     def shoot(self, ship_index):
         ship = self.ships[ship_index]
         # Spawn bullet slightly in front of the ship
@@ -143,18 +173,23 @@ class GameEngine:
         bullet = Bullet(bullet_x, bullet_y, ship.angle, owner=ship_index, speed=15)  # Fast bullets
         self.bullets.append(bullet)
 
-    
+    # Draw the bullets on the screen.
     def draw_bullets(self, screen, camera_x, camera_y):
         for bullet in self.bullets:
             screen_x, screen_y = world_to_screen(bullet.x, bullet.y, camera_x, camera_y)
             pygame.draw.circle(screen, (0, 0, 0), (screen_x, screen_y), 3)
 
-
+    # Rotate the ship by a specified number of degrees.
     def rotate_ship(self, index, degrees):
         self.ships[index].rotate(degrees)
-
+    
+    # Apply thrust to the ship in the direction of its angle.
     def thrust_ship(self, index, amount):
         self.ships[index].thrust(amount)
+
+    # Get the current state of the game.
+    # This includes the state of the ships, score, and time.
+    # The state is returned as a dictionary. (This is useful for saving or sending the state of the game)
 
     def get_game_state(self):
         return {
@@ -179,9 +214,13 @@ WHITE = (255, 255, 255)
 BLUE = (50, 100, 255)
 RED = (255, 50, 50)
 
-#background_image = pygame.image.load("galaxie.jpg")  # Load background image
-#background_image = pygame.transform.scale(background_image, (WORLD_WIDTH, WORLD_HEIGHT))
+background_image = pygame.image.load("galaxie.jpg")  # Load background image
+background_image = pygame.transform.scale(background_image, (WORLD_WIDTH, WORLD_HEIGHT))
 
+# Create a semi-transparent surface
+transparent_surface = pygame.Surface((WORLD_WIDTH, WORLD_HEIGHT), pygame.SRCALPHA)
+transparent_surface.blit(background_image, (0, 0))  # Draw the background onto the surface
+transparent_surface.set_alpha(128)  # Set transparency to 50% (128 out of 255)
 
 def world_to_screen(x, y, camera_x, camera_y):
     return int(x - camera_x + SCREEN_WIDTH // 2), int(y - camera_y + SCREEN_HEIGHT // 2)
@@ -231,6 +270,9 @@ def create_labyrinth():
     ]
     return walls
 
+# Generate a random position for the ship within the labyrinth
+# The position is generated by checking if it is valid (not colliding with walls).
+# The function returns the x and y coordinates of the valid position.
 
 def is_position_valid(x, y, walls):
     ship_rect = pygame.Rect(x - 10, y - 10, 20, 20)  # Size of the ship
@@ -240,6 +282,8 @@ def is_position_valid(x, y, walls):
     return True
 
 
+# Generate a random position for the ship within the labyrinth
+# The position is generated by checking if it is valid (not colliding with walls).
 def generate_valid_position(walls, world_width, world_height):
     while True:
         x = random.randint(100, world_width - 100)  # Avoid outer walls
@@ -247,7 +291,8 @@ def generate_valid_position(walls, world_width, world_height):
         if is_position_valid(x, y, walls):
             return x, y
 
-
+# Generate coins in random positions within the labyrinth
+# The coins are represented as small rectangles.
 def generate_coins(num_coins, walls):
     coins = []
     for _ in range(num_coins):
@@ -255,7 +300,8 @@ def generate_coins(num_coins, walls):
         coins.append(pygame.Rect(x - 5, y - 5, 10, 10))  # Coin as a small rectangle
     return coins
 
-
+# Move the enemy randomly with a chance to rotate or thrust
+# The enemy will rotate left or right randomly and apply light thrust.
 def move_enemy_randomly(enemy):
     # Random rotation
     if random.random() < 0.1:  # 10% chance per frame
@@ -265,7 +311,8 @@ def move_enemy_randomly(enemy):
     if random.random() < 0.2:  # 20% chance per frame
         enemy.thrust(0.5)  # Light thrust
 
-
+# Avoid walls
+# The enemy will check for collisions with walls and rotate away from them.
 def avoid_walls(enemy, walls):
     ship_rect = pygame.Rect(enemy.x - 10, enemy.y - 10, 20, 20)
     for wall in walls:
@@ -275,6 +322,8 @@ def avoid_walls(enemy, walls):
             enemy.thrust(-1)  # Reverse movement
 
 
+# Chase the player
+# The enemy will chase the player by calculating the angle to the player and rotating towards them.
 def chase_player(enemy, player):
     # Calculate the angle to the player
     dx = player.x - enemy.x
@@ -289,7 +338,7 @@ def chase_player(enemy, player):
             enemy.rotate(-3)  # Rotate left
 
     # Thrust towards the player
-    enemy.thrust(0.5)
+    enemy.thrust(0.4)  # Thrust towards the player
 
 
 def can_see_player(enemy, player, walls):
@@ -315,7 +364,7 @@ def chase_and_shoot(enemy, player, walls, engine):
         chase_player(enemy, player)
 
         # Shoot at the player
-        if random.random() < 0.05:  # 5% chance per frame
+        if random.random() < 0.02:  # 5% chance per frame
             engine.shoot(1)  # Enemy shoots (Index 1)
 
 
@@ -342,6 +391,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        # Draw the semi-transparent background relative to the camera
+        screen.blit(transparent_surface, (-camera_x + SCREEN_WIDTH // 2, -camera_y + SCREEN_HEIGHT // 2))
 
         # Draw walls (relative to camera)
         for wall in walls:
