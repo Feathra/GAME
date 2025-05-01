@@ -538,8 +538,8 @@ def main():
             if keys[pygame.K_SPACE]:
                 engine.shoot(0)
         elif mode == "agent" and player:
-            game_state = engine.get_game_state()
-            actions = engine.get_agent_actions(game_state, walls) # <--- Pass the original 'walls' list
+            dummy_agent = DummyAgent(ship_index=0)  # Create an instance of DummyAgent
+            actions = dummy_agent.decide(engine.get_game_state(), walls)  # Directly use the game state -> makes it much faster!!!
             engine.rotate_ship(0, actions["rotate"])
             engine.thrust_ship(0, actions["thrust"])
             if actions["shoot"]:
