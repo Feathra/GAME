@@ -41,12 +41,12 @@ class DummyAgent:
                 angle_difference -= 360  # Rotate left if shorter
 
             # Limit the rotation speed
-            max_rotation_speed = 10  # Maximum rotation speed per frame
+            max_rotation_speed = 40  # Maximum rotation speed per frame
             rotation = max(-max_rotation_speed, min(angle_difference, max_rotation_speed))
 
             # Rotate towards the enemy and shoot
             print(f"Enemy detected! Rotating by {rotation:.2f} degrees and shooting.")
-            return {"rotate": rotation, "thrust": 0, "shoot": True}
+            return {"rotate": rotation, "thrust": 0.5, "shoot": True}
 
         # Check if there is a wall directly in front of the agent
         if self._is_wall_ahead(my_x, my_y, my_angle, walls):
@@ -61,33 +61,25 @@ class DummyAgent:
 
     def _scan_with_laser(self, x, y, angle, target_x, target_y, walls):
         """
-        Simulates a laser scan in the direction of the ship's angle.
-        Returns True if the laser detects the enemy, otherwise False.
+        Scans for enemies with a laser and returns True if the enemy is detected.
         """
-        laser_length = 1000  # Maximum laser range
+        laser_length = 1000  # Long range for enemy detection
         rad = math.radians(angle)
         laser_end_x = x + math.cos(rad) * laser_length
         laser_end_y = y + math.sin(rad) * laser_length
 
-        # Check for wall collisions
+        # Optimization: Only check walls within a radius
+        close_walls = []
+        check_radius = 2000  # Adjust this radius as needed
         for wall in walls:
-            wall_rect = {"x": wall.x, "y": wall.y, "width": wall.width, "height": wall.height} if hasattr(wall, 'x') else wall
-            if self._line_intersects_rect(x, y, laser_end_x, laser_end_y, wall_rect):
-                # Shorten the laser to the wall
-                laser_end_x, laser_end_y = DummyAgent._get_intersection_point(
-                    x, y, laser_end_x, laser_end_y, {
-                        "x": getattr(wall, 'x', 0), "y": getattr(wall, 'y', 0), 
-                        "width": getattr(wall, 'width', 0), "height": getattr(wall, 'height', 0)
-                    }
-                )
-                break
+            if math.hypot(x - (wall.x + wall.width / 2), y - (wall.y + wall.height / 2)) < check_radius:
+                close_walls.append(wall)
 
-        # Check if the laser hits the enemy
-        enemy_rect = {"x": target_x - 10, "y": target_y - 10, "width": 20, "height": 20}  # Size of the enemy
-        if self._line_intersects_rect(x, y, laser_end_x, laser_end_y, enemy_rect):
-            return True
+        for wall in close_walls:
+            if self._line_intersects_rect(x, y, laser_end_x, laser_end_y, {"x": wall.x, "y": wall.y, "width": wall.width, "height": wall.height}):
+                return False  # Laser is blocked
 
-        return False
+        return True  # Enemy is visible
 
     @staticmethod
     def _line_intersects_rect(x1, y1, x2, y2, rect):
@@ -138,17 +130,19 @@ class DummyAgent:
         """
         Checks if there is a wall directly in front of the agent.
         """
-        laser_length = 50  # Short range to check for walls ahead
+        laser_length = 10  # Short range to check for walls ahead
         rad = math.radians(angle)
         laser_end_x = x + math.cos(rad) * laser_length
         laser_end_y = y + math.sin(rad) * laser_length
 
-        # Check for wall collisions
+        # Optimization: Only check walls within a radius
+        close_walls = []
+        check_radius = 50  # Check only walls very close ahead
         for wall in walls:
-            if self._line_intersects_rect(x, y, laser_end_x, laser_end_y, {
-                "x": getattr(wall, 'x', 0), "y": getattr(wall, 'y', 0), 
-                "width": getattr(wall, 'width', 0), "height": getattr(wall, 'height', 0)
-            }):
-                return True
+            if math.hypot(x - (wall.x + wall.width / 2), y - (wall.y + wall.height / 2)) < check_radius:
+                close_walls.append(wall)
 
+        for wall in close_walls:
+            if self._line_intersects_rect(x, y, laser_end_x, laser_end_y, {"x": wall.x, "y": wall.y, "width": wall.width, "height": wall.height}):
+                return True
         return False
