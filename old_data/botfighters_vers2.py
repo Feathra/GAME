@@ -89,11 +89,12 @@ class SpaceObject:
 # This class represents the bullets fired by the ships.
 # Each bullet has a position, angle, owner (ship index), and speed.     
 class Bullet:
-    def __init__(self, x, y, angle, owner, speed=15):  # Bullets are faster
+    def __init__(self, x, y, angle, owner, speed=15, lifespan=60):  # Lifespan in frames (1 second at 60 FPS)
         self.x = x
         self.y = y
         self.angle = angle
         self.owner = owner
+        self.lifespan = lifespan  # Lifespan in frames
         rad = math.radians(angle)
         self.vx = math.cos(rad) * speed
         self.vy = math.sin(rad) * speed
@@ -102,13 +103,17 @@ class Bullet:
     # The bullet moves in the direction of its angle.
     # The position is updated by adding the velocity to the current position.
     def update(self):
+        # Update position
         self.x += self.vx
         self.y += self.vy
+        # Decrease lifespan
+        self.lifespan -= 1
 
     # Check if the bullet is offscreen.
     # The bullet is considered offscreen if it is outside the world boundaries.
     def is_offscreen(self, world_width, world_height):
-        return not (0 <= self.x <= world_width and 0 <= self.y <= world_height)
+        # Check if the bullet is offscreen or its lifespan has expired
+        return not (0 <= self.x <= world_width and 0 <= self.y <= world_height) or self.lifespan <= 0
 
 
 # ------------------------
@@ -143,12 +148,19 @@ class GameEngine:
                         new_ships.append(SpaceObject(x, y, angle=random.randint(0, 360), hp=100))
         self.ships.extend(new_ships)
 
-        
         for bullet in self.bullets:
             bullet.update()
         new_bullets = []
         for bullet in self.bullets:
             hit = False
+            # Check for collisions with walls
+            bullet_rect = pygame.Rect(bullet.x - 3, bullet.y - 3, 6, 6)  # Bullet size
+            for wall in walls:
+                if bullet_rect.colliderect(wall):
+                    hit = True
+                    break
+
+            # Check for collisions with ships
             for i, ship in enumerate(self.ships):
                 if i != bullet.owner and self._collides(bullet, ship):  # Avoid friendly fire
                     ship.hp -= 10  # Damage dealt
@@ -156,7 +168,9 @@ class GameEngine:
                     if ship.hp <= 0 and i == 1:  # Points for killing an enemy
                         self.score[0] += 10  # Player earns 10 points
                     print(f"Ship {i} hit! HP: {ship.hp}")
-            if not hit:
+
+            # Add bullet to the new list if it hasn't hit anything and its lifespan is not over
+            if not hit and bullet.lifespan > 0:
                 new_bullets.append(bullet)
 
         self.bullets = [b for b in new_bullets if not b.is_offscreen(self.ships[0].WORLD_WIDTH, self.ships[0].WORLD_HEIGHT)]
@@ -379,6 +393,10 @@ def main():
     clock = pygame.time.Clock()
     engine = GameEngine(walls)  # Pass walls to the GameEngine
 
+    # Create a semi-transparent rectangle surface for the score and HP
+    info_box = pygame.Surface((200, 50), pygame.SRCALPHA)  # Width: 200, Height: 50
+    info_box.fill((255, 255, 255, 128))  # White with 50% transparency (RGBA)
+
     running = True
     while running:
         screen.fill(WHITE)
@@ -446,16 +464,28 @@ def main():
 
         # Draw ships relative to camera
         for i, ship in enumerate(engine.ships):
+            # Draw the ship
             draw_ship(screen, ship, BLUE if i == 0 else RED, camera_x, camera_y)
+
+            # If the ship is an enemy (not the player), draw its HP beside it
+            if i != 0:  # Enemy ships
+                enemy_screen_x, enemy_screen_y = world_to_screen(ship.x, ship.y, camera_x, camera_y)
+                font = pygame.font.SysFont(None, 24)
+                hp_text = font.render(f"{ship.hp}", True, (255, 0, 0))  # Red text for HP
+                screen.blit(hp_text, (enemy_screen_x + 15, enemy_screen_y - 15))  # Position near the enemy
 
         # Display HP and Score
         font = pygame.font.SysFont(None, 24)
         p1_hp = engine.ships[0].hp
-        p2_hp = engine.ships[1].hp if len(engine.ships) > 1 else 0
-        hp_text = font.render(f"Player HP: {p1_hp}    Enemy HP: {p2_hp}", True, (0, 0, 0))
+        hp_text = font.render(f"Player HP: {p1_hp}", True, (0, 0, 0))  # Only display player HP
         score_text = font.render(f"Score: {engine.score[0]}", True, (0, 0, 0))
-        screen.blit(hp_text, (10, 10))
-        screen.blit(score_text, (10, 40))
+
+        # Draw the semi-transparent rectangle behind the text
+        screen.blit(info_box, (10, 10))  # Position the rectangle at (10, 10)
+
+        # Draw the text on top of the rectangle
+        screen.blit(hp_text, (15, 15))  # Slightly offset from the rectangle
+        screen.blit(score_text, (15, 35))  # Slightly offset below the HP text
 
         engine.draw_bullets(screen, camera_x, camera_y)
 
