@@ -8,7 +8,8 @@ But the enemies will also shoot at you!
 Each enemy killed leads to 2 new ones, making the game increasingly difficult.
 
 If you control the ship yourself:
-Arrow keys: up (accelerate), right/left: turn
+Arrow keys:       up (accelerate), 
+                  right/left: turn
 Space bar: shoot
 
 
