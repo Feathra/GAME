@@ -11,7 +11,6 @@ If you control the ship yourself:
 Arrow keys: up (accelerate), right/left: turn
 Space bar: shoot
 
-Translated with DeepL.com (free version)
 
 ## File Descriptions
 
