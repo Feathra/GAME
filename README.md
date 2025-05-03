@@ -1,6 +1,17 @@
 # BotFighters Arena
 
-This project implements a 2D arena game where ships (bots or player-controlled) navigate a labyrinth, shoot, and avoid obstacles.  It includes game logic, a basic agent, and a server interface.
+Our version of the project implements a 2D arena with a labyrinth.
+In this you can either move yourself or our DummyAgend.
+The aim is to collect as many points as possible.
+This is done by collecting coins or shooting enemies.
+But the enemies will also shoot at you!
+Each enemy killed leads to 2 new ones, making the game increasingly difficult.
+
+If you control the ship yourself:
+Arrow keys: up (accelerate), right/left: turn
+Space bar: shoot
+
+Translated with DeepL.com (free version)
 
 ## File Descriptions
 
