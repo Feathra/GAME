@@ -1,12 +1,67 @@
-Phase 1 Delivery: Game Simulation Engine + API
+# BotFighters Arena
 
-Physics Engine: It can be a real-time (recommended: asyncio) or tick-based simulation update loop. You should be able to simulate agent movement (e.g. rotation, thrust...) and collisions (recommended: pymunk).
-Game world: 2D arena with obstacles. It may contain walls, pickups, ammo, health....
-Game objects: agents and interactive elements (e.g. ships, bullets, mines, shields, pickups, etc.).
-Mobile Agent sensors: API exposes data on demand (e.g. radar scan, velocity/angle, agent status...) (recommended: fastAPI).
-Mobile Agent actuators: API exposes agent actuation commands (e.g. thrust, fire, dropMine, activateShield).
-Dummy Agent: The group should deliver a dummy agent capable of completing the task in the simplest way (e.g. fly randomly and shot if the enemy is detected).
-World Visualizer: Real-time 2D graphics (recommended: pygame, arcade).
-Demo Launch: Instructions to launch the whole system with copies of the dummy agent and the visualizer.
-Installation, usage, and competition instructions. (recommended: github, requirements).
-Work Distribution Report.
+This project implements a 2D arena game where ships (bots or player-controlled) navigate a labyrinth, shoot, and avoid obstacles.  It includes game logic, a basic agent, and a server interface.
+
+## File Descriptions
+
+* **`engine.py`**:
+    * This file contains the core game logic using Pygame.
+    * It defines the `SpaceObject` (ships), `Bullet`, and `GameEngine` classes.
+    * Handles ship movement, physics, collisions, bullet mechanics, and the main game loop.
+    * Implements the labyrinth, coin generation, and drawing routines.
+    * Provides functionality to run the game in either player or agent-controlled mode.
+
+* **`dummy_agent.py`**:
+    * This file defines a basic agent (`DummyAgent`) that controls a ship.
+    * The agent can rotate, thrust, and shoot.
+    * It includes simple logic for enemy detection (using a laser), wall avoidance, and basic combat.
+    * This agent serves as an example and can be replaced with more sophisticated AI.
+
+* **`agent_process.py`**:
+    * This script connects the `DummyAgent` to a server (`server.py`).
+    * It retrieves the game state from the server,  passes it to the agent to get actions, and sends those actions back to the server.
+    * This enables the agent to operate independently of the Pygame visualization.
+
+* **`server.py`**:
+    * This file sets up a FastAPI server.
+    * It defines API endpoints for:
+        * `/game_state`:  Returns the current state of the game (ship positions, wall locations).  *(Note:  Currently returns a static example.)*
+        * `/decide/`:  Receives the game state and sends it to the `DummyAgent` to get the agent's actions.
+    * This server acts as a communication layer between the game engine and external agents.
+
+## Instructions for Use
+
+1.  **Dependencies:**
+    * Make sure you have Python 3.x installed.
+    * Install the necessary Python packages:
+        ```bash
+        pip install pygame requests fastapi uvicorn
+        ```
+
+2.  **Running the Server:**
+    * Open a terminal and navigate to the directory containing the files.
+    * Start the FastAPI server:
+        ```bash
+        uvicorn server:app --reload
+        ```
+        * The `--reload` flag is helpful for development as it automatically restarts the server when you make changes to `server.py`.
+    * The server will typically run at `http://localhost:8000`.
+
+3.  **Running the Game Engine:**
+    * In a separate terminal, run the game engine:
+        ```bash
+        python engine.py
+        ```
+    * A Pygame window will open, displaying the game.
+    * You'll be presented with a start menu:
+        * Press 'P' to play as player
+        * Press 'A' to watch the dummy agent play
+        * Press 'Q' to quit
+
+4.  **Running the Agent Process (Optional, for external agents):**
+    * If you want to run the `DummyAgent` (or your own agent) in a separate process:
+        ```bash
+        python agent_process.py
+        ```
+        * This script will continuously communicate with the server to get the game state and send back agent actions.
+        * Ensure the server is running before starting this.
