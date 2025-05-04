@@ -16,7 +16,7 @@ from dummy_agent import DummyAgent  # Import the DummyAgent class
 # The ships can move, rotate, and apply thrust. The class also manages the health points (HP) of the ships.
 class SpaceObject:
     
-    def __init__(self, x, y, angle=0, velocity_x=0, velocity_y=0, hp=100, WORLD_WIDTH=2000, WORLD_HEIGHT=2000):
+    def __init__(self, x, y, angle=0, velocity_x=0, velocity_y=0, hp=100, WORLD_WIDTH=2000, WORLD_HEIGHT=2000, concurrents=None):
         self.WORLD_WIDTH = WORLD_WIDTH
         self.WORLD_HEIGHT = WORLD_HEIGHT
         self.x = x
@@ -25,6 +25,7 @@ class SpaceObject:
         self.vx = velocity_x  # Initial velocity
         self.vy = velocity_y
         self.hp = hp  # Health points
+        self.concurrents = concurrents
     
     # Update the position of the ship based on its velocity and angle.
     # The ship's velocity is affected by friction, and it is clamped to a maximum speed.    
@@ -71,7 +72,9 @@ class SpaceObject:
 
     def check_wall_collision(self, walls):
         ship_rect = pygame.Rect(self.x - 10, self.y - 10, 20, 20)  # Size of the ship
-        for wall in walls:
+        
+        concurrent_react = [pygame.Rect(so.x - 10, so.y - 10, 20, 20) for so in self.concurrents if so is not self] if self.concurrents else []
+        for wall in walls + concurrent_react:
             if ship_rect.colliderect(wall):
                 # Bounce back based on direction
                 if self.x < wall.x:  # Left of the wall
@@ -138,10 +141,9 @@ except Exception as e:
 # It handles the game logic, including updating the positions of the ships and bullets,
 class GameEngine:
     def __init__(self, walls):
-        self.ships = [
-            SpaceObject(*generate_valid_position(walls, WORLD_WIDTH, WORLD_HEIGHT)),
-            SpaceObject(*generate_valid_position(walls, WORLD_WIDTH, WORLD_HEIGHT))
-        ]
+        self.ships = []
+        self.ships.append(SpaceObject(*generate_valid_position(walls, WORLD_WIDTH, WORLD_HEIGHT), concurrents=self.ships))
+        self.ships.append(SpaceObject(*generate_valid_position(walls, WORLD_WIDTH, WORLD_HEIGHT), concurrents=self.ships))
         self.bullets = [] 
         self.score = [0, 0]
         self.time = 0
@@ -163,7 +165,7 @@ class GameEngine:
                 if is_enemy:  # If an enemy dies, double the number of enemies
                     for _ in range(2):  # Add two new enemies
                         x, y = generate_valid_position(walls, WORLD_WIDTH, WORLD_HEIGHT)
-                        new_ships.append(SpaceObject(x, y, angle=random.randint(0, 360), hp=100))
+                        new_ships.append(SpaceObject(x, y, angle=random.randint(0, 360), hp=100, concurrents = self.ships))
         self.ships.extend(new_ships)
 
         for bullet in self.bullets:
