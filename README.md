@@ -1,17 +1,104 @@
-“BOTFIGHTERS: Space Duel”![image](https://github.com/user-attachments/assets/10e7f048-f37c-427e-bbed-8a59e7d7218b)
+
+<br>
+
+# <div align="center">“BOTFIGHTERS: Space Duel Arena”</div> 
+
+
+
+<div align="center"> Real-time 2D space labyrinth shooter where you pilot a spaceship through waves of enemies. The survival comes down to collecting as many coin as possible, while encountering and shooting the enemies. But the enemies will also shoot at you! As you play, the number of enemies increases, and you’ll need to keep adjusting your strategy. The game focuses on keeping you on your toes and forcing you to think quickly. Each run feels different, and you’ll get better the more you play. Play it yourself, or let the Dummy Agent take control. Are you ready to face the battle and see how long you can last?</div>
+
+<br><br>
+
+   
+# <div align="center"> Instruction</div>
+
+<div align="center"> This instruction explains how to install, use, and compete the “BOTFIGHTERS: Space Duel Arena”.</div>
+
+
+
+
+<br><br>
 
 
 
 
 
-# BotFighters Arena
 
-Our version of the project implements a 2D arena with a labyrinth.
-In this you can either move yourself or our DummyAgend.
-The aim is to collect as many points as possible.
-This is done by collecting coins or shooting enemies.
-But the enemies will also shoot at you!
-Each enemy killed leads to 2 new ones, making the game increasingly difficult.
+## <div align="center"> 1) System requirements</div>
+
+
+- Python 3.x+
+ 
+- Python libraries to run the game and the server. These imports require installation via pip:
+    * 'pygame' for the game environment.
+	 * 'fastapi' for the server-side logic.
+	 * 'uvicorn' to serve the FastAPI application.
+	 * 'requests' to send HTTP requests.
+	 * 'pydantic' for data validation.
+
+To install these, run the following command in the terminal:
+
+```bash
+pip install pygame fastapi uvicorn pydantic requests
+```
+<br>
+
+## <div align="center"> 2) Run the game </div>
+
+
+
+-	Ensure you have the following files in the same directory or Python path:
+    *	engine.py
+    *	minimap.py
+    *	dummy_agent.py
+    *	server.py
+    *	server_demo.html
+    *	galaxie.jpg
+<br>
+
+-	Start the server (optional):
+
+To start the server, run the following command in the terminal:
+
+```bash
+uvicorn server:app --reload
+```
+
+
+If you are using an agent or game state server, ensure it's running at http://localhost:8000.
+
+<br>
+
+
+-	Run the game (in the 2nd terminal, if the server is started):
+
+```bash
+python3 engine.py
+```
+
+
+<br>
+
+-	Run the map (in the 3rd terminal, if the server and game are started):
+
+```bash
+python3 minimap.py
+```
+
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### If you control the ship yourself:  
 
