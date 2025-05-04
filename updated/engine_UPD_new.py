@@ -127,7 +127,7 @@ try:
     response.raise_for_status()
     ACCESS_SERVER_FLAG = True
 except Exception as e:
-    print(f"Нет доступа к серверу: {e}")
+    print(f"No connection to the server: {e}")
 
 # ------------------------
 # GameEngine Class
