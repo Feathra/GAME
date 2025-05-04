@@ -4,8 +4,8 @@ At that point it was only possible to control the game by yourself .
 
 Then we talk about improvements we want to do and exercises we need to do and who will do them:
 
-*FastAPI server: Liza
-*Dummy_Agend: Meret
-*Mini_Map: Liza
-*Improve enemies, bullets, engine: Meret
-*Collision of enemy: Liza
+* FastAPI server: Liza  
+* Dummy_Agend: Meret  
+* Mini_Map: Liza  
+* Improve enemies, bullets, engine: Meret  
+* Collision of enemy: Liza  
