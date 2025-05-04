@@ -172,3 +172,20 @@ Space bar: shoot
         ```
         * This script will continuously communicate with the server to get the game state and send back agent actions.
         * Ensure the server is running before starting this.
+     There are 2 ways to test the mechanics of the game.
+
+## Demo Launch
+
+There are 2 ways to test the mechanics of the game:
+
+On the one hand, it is possible to control the ship yourself. This allows you to test certain mechanics (such as doubling enemies when one dies) directly.
+
+The other is to observe the integrated dummy_agenda. It is equipped with a random movement control. If an enemy comes into its field of vision (the red laser beam), it tracks it and shoots at it.
+
+The basic mechanics are:
+
+- A ship (self-controllable, or as a dummy_agenda), it can shoot and always moves in the direction in which the nose points  
+- A shooting mechanic that allows you to kill enemies  
+- The minimap on which the ship, enemies, walls and coins can be observed  
+- Enemies that shoot at you when they see you in a direct line and otherwise move randomly. When an enemy dies, two new ones follow  
+- Coins that earn you points when you collect them  
