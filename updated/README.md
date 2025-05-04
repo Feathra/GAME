@@ -193,13 +193,30 @@ The FastAPI server provides several endpoints to interact with the game:
 
 - http://localhost:8000/minimap Displays a minimap of the game environment via an HTML interface.
 
+<br><br>
 
 
+# <div align="center"> Demo Launch </div>
 
 
-<br><br><br><br><br><br><br><br><br><br><br><br>
+There are 2 ways to test the mechanics of the game:
 
-## Appendix: File Descriptions.
+On the one hand, it is possible to control the ship yourself. This allows you to test certain mechanics (such as doubling enemies when one dies) directly.
+
+The other is to observe the integrated dummy_agendt. It is equipped with a random movement control. If an enemy comes into its field of vision (the red laser beam), it tracks it and shoots at it.
+
+The basic mechanics are:
+
+- A ship (self-controllable, or as a dummy_agenda), it can shoot and always moves in the direction in which the nose points  
+- A shooting mechanic that allows you to kill enemies  
+- The minimap on which the ship, enemies, walls and coins can be observed  
+- Enemies that shoot at you when they see you in a direct line and otherwise move randomly. When an enemy dies, two new ones follow  
+- Coins that earn you points when you collect them  
+
+
+<br><br>
+
+# <div align="center"> Appendix: File Descriptions</div>
 
 * **`engine.py`**:
     * This file contains the core game logic using Pygame.
@@ -220,6 +237,18 @@ The FastAPI server provides several endpoints to interact with the game:
         * `/game_state`:  Returns the current state of the game (ship positions, wall locations).  *(Note:  Currently returns a static example.)*
         * `/decide/`:  Receives the game state and sends it to the `DummyAgent` to get the agent's actions.
     * This server acts as a communication layer between the game engine and external agents.
+ 
+* **`minimap.py`**:
+    * simple visualization of the game world as a minimap
+    * interacts with the game state data, received from the game server, to display the positions of entities (ships, objects) within the game environment
+
+* **`server_demo.html`**:
+    * provides a basic web interface for interacting with or observing the game server (`server_UPD.py`). Establish a connection with the server (potentially via WebSockets) and display real-time information or allow for simple commands.
+    * To use this interface, open the `server_demo.html` file in a web browser. Ensure that the `server_UPD.py` script is running and accessible from your browser's network. The JavaScript within the HTML file will handle the connection and data exchange with the server. Consult the JavaScript code within the file for details on the communication protocol and available features.
+
+<br><br>
+
+
 
 
 
