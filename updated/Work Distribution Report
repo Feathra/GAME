@@ -1,0 +1,11 @@
+At the beginning, our first goal was to build a working basic game from which we could make modifications, build the dummy_agend, etc.
+The first week we both worked on this. We decided to use Meret's version of the engine with the basic physics, a maze and enemies and bullets.
+At that point it was only possible to play the game alone.
+
+Then we talk about improvements we want to do and exercises we need to do and who will do them:
+
+FastAPI server: Liza
+Dummy_Agend: Meret
+Mini_Map: Liza
+Improve enemies, bullets, engine: Meret
+Collision of enemy: Liza
