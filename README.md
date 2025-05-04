@@ -1,3 +1,9 @@
+“BOTFIGHTERS: Space Duel”![image](https://github.com/user-attachments/assets/10e7f048-f37c-427e-bbed-8a59e7d7218b)
+
+
+
+
+
 # BotFighters Arena
 
 Our version of the project implements a 2D arena with a labyrinth.
