@@ -5,7 +5,7 @@ At that point it was only possible to control the game by yourself .
 Then we talk about improvements we want to do and exercises we need to do and who will do them:
 
 * FastAPI server: Liza  
-* Dummy_Agend: Meret  
+* Dummy_Agend: Meret - The red laser was introduced to simulate the dummy agent's vision. If an enemy crosses it, it is detected and shot down. 
 * Mini_Map: Liza  
-* Improve enemies, bullets, engine: Meret  
+* Improve enemies, bullets, engine: Meret - Enemies should not be able to see and shoot through walls
 * Collision of enemy: Liza  
